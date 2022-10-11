@@ -99,17 +99,14 @@ df.to_csv('./data/healthcareitnews.csv')
 
 
 
-#### Yahoo Finance: Crypto ####
+#### Coin Market Cap: Cryptocurrency ####
 
-page = requests.get('./yahoofinancecrypto.html') ## this is a page we've gotten familiar with as a cohort over the course of the program
-
-## it lists healthcare it news (as its name suggests) in a simple and digestable list format
+page = requests.get('https://coinmarketcap.com/all/views/all/') ## this is one of many popular websites used for tracking cryptocurrency movement
 
 page 
 
 ## creating bs4 object
-with open('/Users/kevinzhou/Documents/GitHub/webscraping/yahoofinancecrypto.html') as x:
-    soup = BeautifulSoup(x.text, 'lxml')
+soup = BeautifulSoup(page.text, 'html.parser')
 
 soup
 
@@ -117,107 +114,86 @@ soup
 print(soup.prettify())
 
 
-## Ticker symbol
+## Name of coin!
 
-days = soup.find_all('a', class_='Fw(600) C($linkColor)')
+names = soup.find_all('a', class_='cmc-table__column-name--name cmc-link')
 
-daylist = []
+namelist = []
 
-for i in days:
+for i in names:
     print(i.text)
-    daylist.append(i.text)
+    namelist.append(i.text)
 
-daylist
+namelist
 
-len(daylist)
-
-
-
+len(namelist) ## unfortunately this isn't the full length of the list of coins because there is a loadmore function built into the site
+## however, this is always the default number of coins printed on the front page. This len should stay consistent as we look for other items like ticker and price movement
 
 
+## Ticker Symbol
 
+tickers = soup.find_all('td', class_='cmc-table__cell cmc-table__cell--sortable cmc-table__cell--left cmc-table__cell--hide-sm cmc-table__cell--sort-by__symbol')
 
+tickerlist = []
 
-
-
-
-
-
-
-
-
-repostars = soup.find_all('a', class_='Link--muted d-inline-block mr-3')
-
-repostars
-
-for i in repostars:
-    print('Count:', i.text)
-
-# get the programming language from each repo
-p_langauge = soup.find_all('span',attrs={'itemprop': 'programmingLanguage'})
-# for each item in p_langauge, print the text
-
-for i in p_langauge:
+for i in tickers:
     print(i.text)
+    tickerlist.append(i.text)
+
+tickerlist
+
+len(tickerlist) ## matches the number of coin names - so far so good
 
 
-# find each article where class='Box-row'
-articles = soup.find_all('article', class_='Box-row')
-# get length of articles
-len(articles)
+## Market Cap
+
+marketcaps = soup.find_all('span', class_='sc-1ow4cwt-1 ieFnWP')
+
+marketcaplist = []
+
+for i in marketcaps:
+    print(i.text)
+    marketcaplist.append(i.text)
+
+marketcaplist
+
+len(marketcaplist)
 
 
+## Price
 
-# get the div that contains data-hpc
-articles = soup.find_all(attrs={"data-hpc":True})  ## way one 
-articles = soup.find_all('div',attrs={'data-hpc':True}) ## way two 
+prices = soup.find_all('div', class_='sc-131di3y-0 cLgOOr')
 
+pricelist = []
 
-### by looking at the website, can see this is where the info is stored: 
-# <h1 class=h3 lh-condensed  ---- this is for the name of the repo 
-# <p1 class=col-9 color-fg-muted my-1 pr-4 ---- this is for the description of the repo
+for i in prices:
+    print(i.text)
+    pricelist.append(i.text)
 
-# get the name of the repo and print it
-repo_name = soup.find_all('h1',class_='h3 lh-condensed')
+pricelist
 
-repo_names = []
-
-for item in repo_name:
-    print(item.text)
-    name = item.text 
-    ## clean name remove whitespace
-    name = name.strip()
-    ## remove new line
-    name = name.replace('\n','')
-    ## remove all white space
-    name = name.replace(' ','')
-    repo_names.append(name)
-len(repo_names)
-
-repo_names
-
-for names in repo_names:
-    print(names)
-
-# get the description of the repo and print it
-repo_desc = soup.find_all('p',class_='col-9 color-fg-muted my-1 pr-4')
-repo_descs = []
-for item in repo_desc:
-    print(item.text)
-    desc = item.text
-    ## clean name remove whitespace
-    desc = desc.strip()
-    ## remove new line
-    desc = desc.replace('\n','')
-    repo_descs.append(desc)
-len(repo_descs)
-
-repo_descs
+len(pricelist)
 
 
-## put this together into a dataframe
-df = pd.DataFrame({'repo_name':repo_names,'repo_desc':repo_descs})
+## Percent Change within the Hour
 
-df
+changes = soup.find_all('td', class_='cmc-table__cell cmc-table__cell--sortable cmc-table__cell--right cmc-table__cell--sort-by__percent-change-1-h')
 
-df.to_csv('./trendinggithub.csv')
+changelist = []
+
+for i in changes:
+    print(i.text)
+    changelist.append(i.text)
+
+changelist
+
+len(changelist)
+
+
+## Putting it all together
+
+cmcdf = pd.DataFrame({'coin_name':namelist, 'ticker_symbol':tickerlist, 'market_cap':marketcaplist, 'price':pricelist, 'percent_change_hour':changelist})
+
+cmcdf
+
+cmcdf.to_csv('./data/coinmarketcap.csv')
